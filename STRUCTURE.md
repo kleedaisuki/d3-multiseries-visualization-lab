@@ -45,9 +45,12 @@ d3-app-usage-visualization/
 │   └── main.js
 ├── css/
 │   └── style.css
+│
 ├── index.html
+│
 ├── STRUCTURE.md
 ├── README.md
+│
 ├── LICENSE
 └── .gitignore
 ```
