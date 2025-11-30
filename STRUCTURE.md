@@ -34,6 +34,8 @@ d3-app-usage-visualization/
 │   └── app_usage_2025-10-28_7days.js
 │ 
 ├── src/
+│   ├── animation.js
+│   ├── main.js
 │   ├── series1.js
 │   └── series2.js
 │

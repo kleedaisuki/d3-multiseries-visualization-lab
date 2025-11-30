@@ -2,11 +2,11 @@
 <html lang="zh">
 
 <head>
-    <meta charset="UTF-8">
-    <title>D3 多系列可视化实验</title>
+    <meta charset="UTF-8" />
+    <title>D3 多系列可视化实验 · D3 Multiseries Lab</title>
 
     <!-- 页面全局样式 -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css" />
 
     <!-- D3 v7 -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
@@ -19,43 +19,139 @@
     <script src="src/series1.js"></script>
     <script src="src/series2.js"></script>
 
+    <!-- 动画模块 -->
+    <script src="src/animation.js" defer></script>
+
     <!-- 入口文件 -->
     <script src="src/main.js" defer></script>
 </head>
 
-<body>
+<body class="theme-dark">
 
-    <header class="page-header">
-        <h1>D3.js 多系列可视化实验</h1>
-        <p class="subtitle">Series 1: App Usage · Series 2: Finance Line Chart</p>
-    </header>
+    <div class="app-shell">
 
-    <main class="main-container">
+        <!-- 顶部导航栏 -->
+        <header class="navbar animate-fade-in">
+            <div class="nav-left">
+                <div class="nav-logo-mark">D3</div>
+                <div class="nav-logo-text">
+                    <span class="nav-logo-title">Multiseries Lab</span>
+                    <span class="nav-logo-subtitle">App Usage × Finance</span>
+                </div>
+            </div>
+            <nav class="nav-right">
+                <a href="https://github.com/kleedaisuki/d3-multiseries-visualization-lab"
+                    class="nav-link nav-link-pill">View it on GitHub</a>
+            </nav>
+        </header>
 
-        <!-- **********************************
-             Series 1: APP 使用情况极坐标图
-        *********************************** -->
-        <section id="series1-section">
-            <h2 class="section-title">系列 1：APP 使用情况（极坐标图）</h2>
+        <!-- Hero 区域 -->
+        <section class="hero-section animate-fade-in-delayed">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <div class="hero-pill">
+                        <span class="pill-dot"></span>
+                        <span>Course Lab · D3.js · Data Storytelling</span>
+                    </div>
+                    <h1 class="hero-title">
+                        数据可视化实验三
+                    </h1>
+                    <p class="hero-subtitle">
+                        下方两块区域分别挂载极坐标 App 使用图和金融折线图。可以在
+                        <code>series1.js</code> / <code>series2.js</code> 中继续迭代视觉编码，
+                        在 <code>animation.js</code> 里为卡片和图表添加动效。
+                    </p>
 
-            <!-- JS 会自动往里面 append 各个 app 的容器 -->
-            <div id="series1" class="series1-grid"></div>
+                    <div class="hero-meta">
+                        <div class="hero-badges">
+                            <span class="badge badge-accent">Series 1 · App Usage</span>
+                            <span class="badge badge-outline">Series 2 · Finance</span>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="stat">
+                                <span class="stat-label">Charts</span>
+                                <span class="stat-value">2 系列</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Tech</span>
+                                <span class="stat-value">D3 v7</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Style</span>
+                                <span class="stat-value">Gradient · Glass</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-panel">
+                    <div class="hero-panel-card">
+                        <p class="hero-panel-label">About</p>
+                        <p class="hero-panel-text">
+                            整个页面的视觉风格其实全交给 ChatGPT 处理了，因为我只会做点架构，把整个项目重构了两遍解耦到位。<br />
+                            风格我让它给我做成了刚融资的 tech startup 那种感觉，其实真要我设计我也设计不明白，配色完全不会，哈哈。<br />
+                            就比如其实左边 Series 1 · App Usage 和 Series 2 · Finance 两个标签非常意义不明；而且现在这个展示我废话的框的动画效果非常出戏。
+                        </p>
+                        <div class="hero-chip-row">
+                            <span class="chip">Vibe Coding</span>
+                            <span class="chip">AI屎山</span>
+                            <span class="chip">前端无能</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
-        <!-- **********************************
-             Series 2: 金融指数折线图
-        *********************************** -->
-        <section id="series2-section">
-            <h2 class="section-title">系列 2：年度资产价格（折线图）</h2>
+        <!-- 主体内容 -->
+        <main class="main-container">
 
-            <div id="series2" class="series2-container"></div>
-        </section>
+            <!-- Series 1: APP 使用情况极坐标图 -->
+            <section id="series1-section" class="section-card animate-slide-up">
+                <header class="section-header">
+                    <div>
+                        <h2 class="section-title">系列 1：APP 使用情况（极坐标图）</h2>
+                        <p class="section-subtitle">
+                            使用 12 时辰角度、日期颜色、半径映射使用时长。每个 App 作为一张独立小卡片栅格展示。
+                        </p>
+                    </div>
+                    <div class="section-tag-group">
+                        <span class="tag">Radial</span>
+                        <span class="tag">Per-App Grid</span>
+                        <span class="tag">Tooltip</span>
+                    </div>
+                </header>
 
-    </main>
+                <!-- JS 会自动往里面 append 各个 app 的容器 -->
+                <div id="series1" class="series1-grid"></div>
+            </section>
 
-    <footer class="page-footer">
-        <p>© 2025 D3 Visualization Lab</p>
-    </footer>
+            <!-- Series 2: 金融指数折线图 -->
+            <section id="series2-section" class="section-card animate-slide-up-delayed">
+                <header class="section-header">
+                    <div>
+                        <h2 class="section-title">系列 2：年度资产价格（折线图）</h2>
+                        <p class="section-subtitle">
+                            对 S&amp;P 500、Nasdaq 与 BTC 的年度走势进行重制设计，聚焦长期趋势与对比关系。
+                        </p>
+                    </div>
+                    <div class="section-tag-group">
+                        <span class="tag">Line Chart</span>
+                        <span class="tag">Multi-Series</span>
+                        <span class="tag">Remake</span>
+                    </div>
+                </header>
+
+                <div id="series2" class="series2-container"></div>
+            </section>
+
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="page-footer">
+            <p>© 2025 D3 Multiseries Visualization Lab · Built with D3.js</p>
+        </footer>
+
+    </div>
 
 </body>
 
