@@ -30,19 +30,13 @@ A visualization study using D3.js to encode multi-day app usage as radial tempor
 d3-app-usage-visualization/
 │
 ├── data/       
-│   ├── SP500_Nasdaq_BTC_20yrs_annual.csv
-│   └── app_usage_2025-10-28_7days.csv         
+│   ├── SP500_Nasdaq_BTC_20yrs_annual.js
+│   └── app_usage_2025-10-28_7days.js
+│ 
 ├── src/
-│   ├── preprocess/
-│   │     ├── preprocess_app.js
-│   │     ├── preprocess_finance.js
-│   │     └── index.js
-│   │
-│   ├── series/
-│   │     ├── series1.js
-│   │     └── series2.js
-│   │
-│   └── main.js
+│   ├── series1.js
+│   └── series2.js
+│
 ├── css/
 │   └── style.css
 │
@@ -89,28 +83,21 @@ d3-app-usage-visualization/
 
 ### 为什么是这 4 个文件？
 
-#### ① /preprocess/
-
-**数据层（Data layer）**
-
-* 结构化、标准化、清洗。
-* 所有图表都依赖它，所以独立出来。
-
-#### ② series1.js
+#### ① series1.js
 
 **图表层（Vis layer）—— 系列1专用**
 
 * 极坐标图有独特的逻辑：scale、arc、legend、annotation、tooltip。
 * 这套逻辑比较复杂，放到独立模块可读性更强。
 
-#### ③ series2.js
+#### ② series2.js
 
 **图表层（Vis layer）—— 系列2专用**
 
 * 重制图和系列1完全不同。
 * 分开后不会互相污染，也更符合 MECE。
 
-#### ④ main.js
+#### ③ main.js
 
 **入口层（Entry point）**
 负责 orchestrate 全局流程：
@@ -147,7 +134,6 @@ Use-case：
 
 * 两个 series 的 `<div>` 容器
 * tooltip 的 `<div>`
-* 引入 d3.js
 * 引入 main.js
 
 HTML 的角色是一张“舞台蓝图”，让 JS 上去表演。
@@ -180,7 +166,6 @@ GitHub 默认 Node 模板覆盖得最全最安全。
 
 * **src/**
 
-  * preprocess.js：数据逻辑
   * series1.js：第一个图表系统
   * series2.js：第二个图表系统
   * main.js：统一调度

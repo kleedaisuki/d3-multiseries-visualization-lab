@@ -1,122 +1,95 @@
 /**
- * @brief 项目入口（main.js）：统一加载数据、预处理，并调用系列1与系列2的渲染模块  
- *        Project entry: load data, preprocess, and call Series 1 & Series 2 renderers.
+ * @file main.js
+ * @brief 项目入口：负责数据调度、DOM 初始化、图表渲染
+ *        Project entry point: orchestrates datasets, DOM init, and chart rendering.
  *
- * @note 本文件不负责图表绘制逻辑，仅做 orchestration
- *       This file does not implement visualization logic; it orchestrates all modules.
- *
- * @note 依赖：  
- *       - Preprocess.AppUsage (from preprocess/index.js)  
- *       - Preprocess.Finance  
- *       - AppUsageSeries1 (series1.js)  
- *       - FinanceSeries2   (series2.js)
+ * @note 本文件不包含任何绘图逻辑，仅作为 orchestrator。
+ *       This file contains no visualization logic; it only orchestrates calls.
  */
 
-(function (global) {
-    "use strict";
+(function () {
+    'use strict';
 
     /**
-     * @brief 项目初始化入口  
-     *        Bootstrap function of the whole project.
+     * @brief 初始化整个项目 / Initialize whole project.
      *
-     * @note 在 HTML `<body onload="Main.init()">` 或 main.js 最后自动触发  
-     *       Called once on page load.
+     * @note 在 DOMContentLoaded 后被调用。
      */
     function init() {
-        console.log("Main.init(): 项目启动中 / Project booting…");
+        console.log('Main.init(): 项目启动中 / Project booting…');
 
-        // ================================
-        // 1. 加载并预处理「APP 使用情况」数据
-        // ================================
-        const appCsv = "data/app_usage_2025-10-28_7days.csv";
-        const appPromise = Preprocess.AppUsage.loadAndPreprocess(appCsv)
-            .then(appData => {
-                console.log("App usage preprocessed:", appData);
-                renderSeries1(appData);
-                return appData;
-            })
-            .catch(err => {
-                console.error("加载 APP 使用数据失败 / Failed to load app usage CSV:", err);
-            });
-
-        // ================================
-        // 2. 加载并预处理「年度资产价格」数据（系列2）
-        // ================================
-        const financeCsv = "data/SP500_Nasdaq_BTC_20yrs_annual.csv";
-        const financePromise = Preprocess.Finance.loadAndPreprocess(financeCsv)
-            .then(finance => {
-                console.log("Finance preprocessed:", finance);
-                renderSeries2(finance);
-                return finance;
-            })
-            .catch(err => {
-                console.error("加载年度资产价格数据失败 / Failed to load finance CSV:", err);
-            });
-
-        // 若需要等待两个都加载完（例如做全局状态）可以：
-        // Promise.all([appPromise, financePromise]).then(([appData, financeData]) => { ... });
-    }
-
-    /**
-     * @brief 渲染系列1：APP 使用极坐标图  
-     *        Render Series 1 radial charts for selected apps.
-     *
-     * @param {Object} appData 预处理结果（byApp / longRecords）  
-     *                         Preprocessed app usage result.
-     */
-    function renderSeries1(appData) {
-        if (!appData || !appData.byApp) {
-            console.warn("Series1: appData invalid.");
+        // === 1. 检查全局数据（防止加载错误） ===========================
+        if (!Array.isArray(APP_USAGE_DATA)) {
+            console.error('APP_USAGE_DATA 加载失败 / APP_USAGE_DATA not loaded.');
+            return;
+        }
+        if (!Array.isArray(FINANCE_DATA)) {
+            console.error('FINANCE_DATA 加载失败 / FINANCE_DATA not loaded.');
             return;
         }
 
-        // TODO：根据你的 HTML，你放了几个容器？
-        // 例如：#series1-app-0, #series1-app-1
-        // 这里选择前两个最常使用的 App：
-        const appNames = Array.from(appData.byApp.keys()).slice(0, 2);
+        // === 2. 系列1：APP 使用情况极坐标图 ==============================
+        renderSeries1();
 
-        AppUsageSeries1.renderForMultipleApps(appData, appNames, {
-            containerPrefix: "#series1-app-",
-            width: 320,
-            height: 360
+        // === 3. 系列2：年度金融折线图 ================================
+        renderSeries2();
+
+        console.log('Main.init(): 所有图表已渲染完毕 / All charts rendered.');
+    }
+
+    /**
+     * @brief 渲染系列1（APP 使用情况） / Render Series 1 (app usage polar charts)
+     */
+    function renderSeries1() {
+        console.log('渲染 Series1 / Rendering Series1…');
+
+        // (1) 指定要绘制的应用名称（至少两个）
+        // 你可以随时扩展
+        const appsToShow = ['微信', 'Bilibili'];
+
+        // (2) 自动为每个 app 创建容器 div
+        const containerRoot = document.querySelector('#series1');
+        if (!containerRoot) {
+            console.error('#series1 容器缺失 / Missing #series1 container.');
+            return;
+        }
+        containerRoot.innerHTML = ''; // 清空旧内容
+
+        appsToShow.forEach(app => {
+            const div = document.createElement('div');
+            div.id = 'series1-app-' + app;
+            div.className = 'series1-app-container';
+            containerRoot.appendChild(div);
+        });
+
+        // (3) 调用系列1模块
+        AppUsageSeries1.renderFromRawRecords(APP_USAGE_DATA, appsToShow, {
+            containerPrefix: '#series1-app-',
+            width: 360,
+            height: 380
         });
     }
 
     /**
-     * @brief 渲染系列2：年度资产价格折线图  
-     *        Render redesigned annual finance line chart.
-     *
-     * @param {Object} financeResult FinancePreprocess 的返回结果  
-     *                              Preprocessed finance result.
+     * @brief 渲染系列2（金融重制图）/ Render Series 2 (finance line chart)
      */
-    function renderSeries2(financeResult) {
-        if (!financeResult) {
-            console.warn("Series2: financeResult invalid.");
+    function renderSeries2() {
+        console.log('渲染 Series2 / Rendering Series2…');
+
+        const container = '#series2';
+        const root = document.querySelector(container);
+        if (!root) {
+            console.error('#series2 容器缺失 / Missing #series2 container.');
             return;
         }
+        root.innerHTML = ''; // 清空
 
-        FinanceSeries2.renderFromPreprocessResult(financeResult, {
-            container: "#series2",
-            title: "全球主要资产表现（20年） / Global Assets Performance (20 years)",
-            normalize: true,
-            showPoints: true
+        FinanceSeries2.renderFromRawRows(container, FINANCE_DATA, {
+            width: 780,
+            height: 440
         });
     }
 
-    // 暴露给全局 / Export global API
-    const api = {
-        init: init,
-        renderSeries1: renderSeries1,
-        renderSeries2: renderSeries2
-    };
-
-    global.Main = api;
-
-    // 自动启动（如不想自动启动可注释掉）
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-    } else {
-        init();
-    }
-
-})(this);
+    // 注册 DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', init);
+})();

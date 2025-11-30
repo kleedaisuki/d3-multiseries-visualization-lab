@@ -1,119 +1,62 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 
 <head>
-    <meta charset="UTF-8" />
-    <title>实验 4：APP 使用与资产价格可视化</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <title>D3 多系列可视化实验</title>
 
-    <!-- 全局样式 -->
-    <link rel="stylesheet" href="css/style.css" />
+    <!-- 页面全局样式 -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- D3 v7 -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+    <!-- 数据源（全局常量 JS） -->
+    <script src="data/app_usage_2025-10-28_7days.js"></script>
+    <script src="data/SP500_Nasdaq_BTC_20yrs_annual.js"></script>
+
+    <!-- 可视化模块 -->
+    <script src="src/series1.js"></script>
+    <script src="src/series2.js"></script>
+
+    <!-- 入口文件 -->
+    <script src="src/main.js" defer></script>
 </head>
 
 <body>
+
     <header class="page-header">
-        <div class="page-header-inner">
-            <h1 class="page-title">实验 4：APP 使用情况 & 资产价格可视化</h1>
-            <p class="page-subtitle">
-                使用 D3.js 在同一页面中绘制两个系列的图表：多日 APP 使用极坐标图 + 年度资产价格重制折线图。
-            </p>
-        </div>
+        <h1>D3.js 多系列可视化实验</h1>
+        <p class="subtitle">Series 1: App Usage · Series 2: Finance Line Chart</p>
     </header>
 
-    <main class="page-main">
-        <!-- 系列 1：APP 使用情况 -->
-        <section id="series1-section" class="section">
-            <header class="section-header">
-                <h2 class="section-title">系列 1：APP 使用情况（极坐标图）</h2>
-                <p class="section-desc">
-                    每个圆盘对应一个 App：扇形所在角度映射 12 时辰，扇形颜色映射日期，扇形半径映射该日该时辰的使用时长。
-                </p>
-            </header>
+    <main class="main-container">
 
-            <div class="section-content">
-                <div class="series1-layout">
-                    <!-- 这两个容器会由 AppUsageSeries1.renderForMultipleApps 填充 -->
-                    <!-- containerPrefix = "#series1-app-"，因此这里用 -0 / -1 / ... -->
-                    <div id="series1-app-0" class="chart-card chart-card-series1"></div>
-                    <div id="series1-app-1" class="chart-card chart-card-series1"></div>
-                </div>
+        <!-- **********************************
+             Series 1: APP 使用情况极坐标图
+        *********************************** -->
+        <section id="series1-section">
+            <h2 class="section-title">系列 1：APP 使用情况（极坐标图）</h2>
 
-                <p class="section-note">
-                    提示：中心文字显示 App 名称与总使用时长；外圈图例显示日期与颜色映射；自动注释会标出使用时长峰值。✨
-                </p>
-            </div>
+            <!-- JS 会自动往里面 append 各个 app 的容器 -->
+            <div id="series1" class="series1-grid"></div>
         </section>
 
-        <!-- 系列 2：年度资产价格重制图表 -->
-        <section id="series2-section" class="section">
-            <header class="section-header">
-                <h2 class="section-title">系列 2：年度资产价格重制（折线图）</h2>
-                <p class="section-desc">
-                    选取 S&P 500、Nasdaq Composite 与 Bitcoin 的年度价格，按首个年份归一化为 1.0，
-                    比较不同资产在 20 年内的相对涨幅表现。
-                </p>
-            </header>
+        <!-- **********************************
+             Series 2: 金融指数折线图
+        *********************************** -->
+        <section id="series2-section">
+            <h2 class="section-title">系列 2：年度资产价格（折线图）</h2>
 
-            <div class="section-content">
-                <!-- FinanceSeries2 会在这里挂载重制折线图 -->
-                <div id="series2" class="chart-card chart-card-series2"></div>
-
-                <p class="section-note">
-                    横轴为年份，纵轴为相对起始年倍数；图例展示不同资产的颜色映射；点位 hover 可查看精确数值。
-                </p>
-            </div>
+            <div id="series2" class="series2-container"></div>
         </section>
+
     </main>
 
     <footer class="page-footer">
-        <div class="page-footer-inner">
-            <p class="footer-text">
-                实验 4 · D3.js 多系列可视化练习
-            </p>
-        </div>
+        <p>© 2025 D3 Visualization Lab</p>
     </footer>
 
-    <!-- ========================= -->
-    <!-- JavaScript 依赖与入口     -->
-    <!-- ========================= -->
-
-    <!-- 1. D3.js 核心库 -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-
-    <!-- 2. 预处理层：AppUsage & Finance（IIFE，挂到 window） -->
-    <!--    这两个脚本内部会定义 global.AppUsagePreprocess / global.FinancePreprocess -->
-    <!--    对应我们之前写好的预处理工具。 -->
-    <script src="src/preprocess/preprocess_app.js"></script> <!-- AppUsagePreprocess -->
-    :contentReference[oaicite:3]{index=3}
-    <script src="src/preprocess/preprocess_finance.js"></script> <!-- FinancePreprocess -->
-    :contentReference[oaicite:4]{index=4}
-
-    <!-- 3. 统一 Preprocess 命名空间（与 main.js 期待的一致） -->
-    <script>
-        (function (global) {
-            "use strict";
-            var AppUsagePreprocess = global.AppUsagePreprocess;
-            var FinancePreprocess = global.FinancePreprocess;
-
-            // 简单防御：如果没加载成功，就给出警告
-            if (!AppUsagePreprocess || !FinancePreprocess) {
-                console.warn("预处理模块未正确加载：AppUsagePreprocess / FinancePreprocess 缺失。");
-            }
-
-            global.Preprocess = {
-                AppUsage: AppUsagePreprocess,
-                Finance: FinancePreprocess
-            };
-        })(this);
-    </script>
-
-    <!-- 4. 系列 1 & 系列 2 图表渲染模块（IIFE，挂到 global） -->
-    <script src="src/series/series1.js"></script> <!-- AppUsageSeries1 --> :contentReference[oaicite:5]{index=5}
-    <script src="src/series/series2.js"></script> <!-- FinanceSeries2 --> :contentReference[oaicite:6]{index=6}
-
-    <!-- 5. 项目入口：数据加载 + 预处理 + 调用渲染函数 -->
-    <!--    main.js 内部自动在 DOMContentLoaded 时调用 Main.init()。 -->
-    <script src="src/main.js"></script> :contentReference[oaicite:7]{index=7}
 </body>
 
 </html>
