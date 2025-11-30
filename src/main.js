@@ -45,7 +45,7 @@
 
         // (1) 指定要绘制的应用名称（至少两个）
         // 你可以随时扩展
-        const appsToShow = ['微信', 'Bilibili'];
+        const appsToShow = ['微信', 'QQ'];
 
         // (2) 自动为每个 app 创建容器 div
         const containerRoot = document.querySelector('#series1');

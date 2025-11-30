@@ -27,7 +27,7 @@
         outerRadiusRatio: 0.46,
         backgroundRingCount: 3,
         hourLabelStep: 3,
-        transitionDuration: 600
+        transitionDuration: 640
     };
 
     /**
@@ -46,6 +46,61 @@
         }
         return keys;
     })();
+
+    /**
+     * @brief startup 风格 APP 配色表（design tokens）
+     *        Startup-style APP color tokens.
+     */
+    const APP_COLOR_TOKENS = {
+        '微信': {
+            hue: 140,   // 统一用 HSL 自适应
+            saturation: 76,
+            lightBase: 48,
+            alphaFrom: 0.16,
+            alphaTo: 0.92
+        },
+        'QQ': {
+            hue: 198,
+            saturation: 88,
+            lightBase: 54,
+            alphaFrom: 0.18,
+            alphaTo: 0.96
+        }
+    };
+
+    /**
+     * @brief 默认配色（用主品牌紫色）
+     */
+    const DEFAULT_COLOR_TOKEN = {
+        hue: 248,
+        saturation: 86,
+        lightBase: 52,
+        alphaFrom: 0.20,
+        alphaTo: 0.96
+    };
+
+    /**
+     * @brief 将 token 转换为渐变色结构
+     *
+     * @return {{base: string, from: string, to: string}}
+     */
+    function tokenToColorStops(token) {
+        const { hue, saturation, lightBase, alphaFrom, alphaTo } = token;
+
+        return {
+            base: `hsl(${hue}, ${saturation}%, ${lightBase}%)`,
+            from: `hsla(${hue}, ${saturation}%, ${lightBase}%, ${alphaFrom})`,
+            to: `hsla(${hue}, ${saturation}%, ${lightBase}%, ${alphaTo})`
+        };
+    }
+
+    /**
+     * @brief 获取 APP 配色（含 fallback + 自适应）
+     */
+    function getAppColorStops(appName) {
+        const token = APP_COLOR_TOKENS[appName] || DEFAULT_COLOR_TOKEN;
+        return tokenToColorStops(token);
+    }
 
     /**
      * @brief 合并用户配置和默认配置
@@ -159,14 +214,17 @@
         const size = computeInnerSize(cfg);
         const svg = d3.select(containerSelector)
             .append('svg')
+            .attr('class', 'series1-svg')
             .attr('width', cfg.width)
             .attr('height', cfg.height);
 
         const g = svg.append('g')
-            .attr('transform',
+            .attr(
+                'transform',
                 'translate(' +
                 (cfg.marginLeft + size.innerWidth / 2) + ',' +
-                (cfg.marginTop + size.innerHeight / 2) + ')');
+                (cfg.marginTop + size.innerHeight / 2) + ')'
+            );
 
         const radius = Math.min(size.innerWidth, size.innerHeight) / 2;
         const innerRadius = radius * cfg.innerRadiusRatio;
@@ -203,6 +261,7 @@
         const outerRadius = root.outerRadius;
 
         const maxValue = d3.max(hourlySeries, function (d) { return d.value; }) || 0;
+
         const angle = d3.scaleBand()
             .domain(hourlySeries.map(function (d) { return d.hour; }))
             .range([0, Math.PI * 2])
@@ -225,10 +284,26 @@
             });
         }
 
-        // 扇形（使用 d3.arc）
-        const arc = d3.arc()
-            .innerRadius(function (d) { return radius(0); })
+        // 为该 App 构造颜色渐变尺度 / build color scale for this app
+        const colorStops = getAppColorStops(appName);
+        const colorScale = d3.scaleLinear()
+            .domain([0, maxValue || 1])
+            .range([colorStops.from, colorStops.to]);
+
+        // 扇形（使用 d3.arc），先定义“目标形状”和“初始形状”
+        // arc used for final state
+        const arcFinal = d3.arc()
+            .innerRadius(function () { return radius(0); })
             .outerRadius(function (d) { return radius(d.value); })
+            .startAngle(function (d) { return angle(d.hour); })
+            .endAngle(function (d) { return angle(d.hour) + angle.bandwidth(); })
+            .padAngle(0.02)
+            .padRadius(innerRadius);
+
+        // arc used for entry animation (all collapsed to inner radius)
+        const arcInitial = d3.arc()
+            .innerRadius(function () { return radius(0); })
+            .outerRadius(function () { return radius(0); })
             .startAngle(function (d) { return angle(d.hour); })
             .endAngle(function (d) { return angle(d.hour) + angle.bandwidth(); })
             .padAngle(0.02)
@@ -236,18 +311,46 @@
 
         const arcGroup = g.append('g').attr('class', 'series1-arcs');
 
-        arcGroup.selectAll('path')
+        // 先 append path，再单独追加 title，再做 transition，
+        // 避免链式调用里混入 transition 影响结构。
+        const arcEnter = arcGroup.selectAll('path')
             .data(hourlySeries)
             .enter()
             .append('path')
             .attr('class', 'series1-arc')
-            .attr('d', arc)
+            .attr('fill', function (d) {
+                return colorScale(d.value || 0);
+            })
+            // 初始形状：收缩在中心 / initial collapsed shape
+            .attr('d', arcInitial);
+
+        // tooltip title
+        arcEnter
             .append('title')
             .text(function (d) {
                 return appName + ' ' + d.label + ': ' + d.value.toFixed(1) + ' min';
             });
 
-        // 小时标签 / hour labels
+        // 入场动画：中心向外“长出” / grow from center
+        arcEnter
+            .transition()
+            .duration(cfg.transitionDuration)
+            .delay(function (d) {
+                // 轻微按时间错峰，增强 rhythm / stagger by hour
+                return d.hour * 12;
+            })
+            .attrTween('d', function (d) {
+                const i = d3.interpolate(0, d.value || 0);
+                return function (t) {
+                    const v = i(t);
+                    return arcFinal({
+                        hour: d.hour,
+                        value: v
+                    });
+                };
+            });
+
+        // 小时标签 / hour labels（维持信息完备性，符合 STRUCTURE 要求）
         const labelGroup = g.append('g').attr('class', 'series1-hour-labels');
         hourlySeries.forEach(function (d) {
             if (d.hour % cfg.hourLabelStep !== 0) {
@@ -291,7 +394,7 @@
      * @example
      *   AppUsageSeries1.renderFromRawRecords(
      *       APP_USAGE_DATA,
-     *       ['微信', 'Bilibili'],
+     *       ['微信', 'QQ'],
      *       { containerPrefix: '#series1-app-', width: 360, height: 380 }
      *   );
      */
@@ -324,7 +427,7 @@
         /** @brief 默认配置 / Default configuration. */
         DEFAULT_CONFIG: DEFAULT_CONFIG,
 
-        /** 
+        /**
          * @brief 从原始记录渲染多个应用图表
          *        Render multiple app charts from raw records.
          */
